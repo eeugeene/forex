@@ -1,0 +1,229 @@
+<!-- ===== templates/dashboard.html ===== -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <!-- Current Rate Display -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">UGX/USD Exchange Rate</h5>
+            </div>
+            <div class="card-body">
+                <div class="rate-display" id="currentRate">
+                    <span class="loading">Loading...</span>
+                </div>
+                <div class="text-center">
+                    <small class="text-muted" id="lastUpdate">Last updated: --</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="col-12">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">24H High</div>
+                <div class="stat-value" id="high24h">--</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">24H Low</div>
+                <div class="stat-value" id="low24h">--</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Buy Rate</div>
+                <div class="stat-value" id="buyRate">--</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Sell Rate</div>
+                <div class="stat-value" id="sellRate">--</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="col-12 col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Price Chart</h5>
+                <div class="timeframe-buttons">
+                    <button class="timeframe-btn active" data-timeframe="1d">1D</button>
+                    <button class="timeframe-btn" data-timeframe="7d">7D</button>
+                    <button class="timeframe-btn" data-timeframe="30d">30D</button>
+                    <button class="timeframe-btn" data-timeframe="90d">90D</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="rateChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts Section -->
+    <div class="col-12 col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Price Alerts</h5>
+            </div>
+            <div class="card-body">
+                <!-- Alert Form -->
+                <div class="alert-form">
+                    <h6>Create Alert</h6>
+                    <form id="alertForm">
+                        <div class="mb-3">
+                            <label class="form-label">Threshold Rate</label>
+                            <input type="number" class="form-control" id="thresholdRate" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Alert Type</label>
+                            <select class="form-control" id="alertType" required>
+                                <option value="above">Above Threshold</option>
+                                <option value="below">Below Threshold</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Create Alert</button>
+                    </form>
+                </div>
+
+                <!-- Active Alerts -->
+                <div class="alert-list" id="alertsList">
+                    <div class="loading">Loading alerts...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dash Analytics Link -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Advanced Analytics</h5>
+                <p class="text-muted">View detailed analytics and advanced charts</p>
+                <a href="http://127.0.0.1:8050" target="_blank" class="btn btn-success">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Open Dash Analytics
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Global variables
+let chart;
+let currentTimeframe = '7d';
+let alerts = [];
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    initChart();
+    loadCurrentRate();
+    loadAlerts();
+    setupEventListeners();
+    
+    // Update data every 30 seconds
+    setInterval(() => {
+        loadCurrentRate();
+        updateChart();
+    }, 30000);
+});
+
+// Setup event listeners
+function setupEventListeners() {
+    // Timeframe buttons
+    document.querySelectorAll('.timeframe-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.timeframe-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentTimeframe = this.dataset.timeframe;
+            updateChart();
+        });
+    });
+
+    // Alert form
+    document.getElementById('alertForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        createAlert();
+    });
+}
+
+// Initialize Chart.js
+function initChart() {
+    const ctx = document.getElementById('rateChart').getContext('2d');
+    chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+datasets: [{
+                label: 'UGX/USD Rate',
+                data: [],
+                borderColor: 'var(--blue)',
+                backgroundColor: 'rgba(56, 97, 251, 0.2)',
+                fill: true,
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'day',
+                        tooltipFormat: 'MMM D, YYYY HH:mm',
+                        displayFormats: {
+                            day: 'MMM D'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Date',
+                        color: 'var(--text-secondary)'
+                    },
+                    ticks: {
+                        color: 'var(--text-secondary)'
+                    },
+                    grid: {
+                        color: 'var(--border-color)'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Rate (UGX/USD)',
+                        color: 'var(--text-secondary)'
+                    },
+                    ticks: {
+                        color: 'var(--text-secondary)'
+                    },
+                    grid: {
+                        color: 'var(--border-color)'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            return new Date(context[0].parsed.x).toLocaleString();
+                        },
+                        label: function(context) {
+                            return `Rate: ${context.parsed.y.toFixed(2)}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    updateChart(); // Load initial chart data
+}
+            
