@@ -1,0 +1,7 @@
+# ===== requirements.txt =====
+Django==5.0.1
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+dash==2.16.1
+plotly==5.17.0
+pandas==2.1.4
