@@ -77,5 +77,5 @@ Before you begin, ensure you have the following installed:
 *   **User Authentication:** Secure login and logout functionality.
 
 
-
+## 
 Good luck.
