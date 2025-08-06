@@ -17,10 +17,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+# Define the URL patterns for the entire Django project.
 urlpatterns = [
-    path('', include('hello.urls')),
+    # Includes the URL patterns from the 'forex' application.
+    # This means that any URLs defined in 'forex/urls.py' will be accessible under the root path.
+    path('', include('forex.urls')),
+    # Maps the '/admin/' path to Django's built-in administrative interface.
     path('admin/', admin.site.urls),
-    path('api/rates/', include('apps.rates.urls')),
-    path('api/alerts/', include('apps.alerts.urls')),
-    path('api/auth/', include('rest_framework.urls')),
 ]

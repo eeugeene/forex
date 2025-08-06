@@ -39,9 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    'apps.core',
-    'apps.rates',
-    'apps.alerts',
+    'forex', # Our custom forex application
 ]
 
 MIDDLEWARE = [
@@ -53,6 +51,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'forex.middleware.NoCacheMiddleware', # Custom middleware to prevent caching of authenticated pages
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -60,7 +59,8 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        # Configure Django to look for templates in the project's base templates directory.
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -137,9 +137,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+# Define where Django should look for static files (CSS, JavaScript, images).
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# URL to redirect to for login when @login_required is used.
+LOGIN_URL = 'login'
+# URL to redirect to after a user logs out.
+LOGOUT_REDIRECT_URL = '/admin/login/' # Redirect to admin login after logout
