@@ -1,4 +1,4 @@
-# Forex Watcher Web Application
+# Django Forex Watcher Web Application
 
 This is a simple web application built with Django that allows users to monitor real-time forex exchange rates for UGX-USD currency pairs and subsequently more. It features an embedded TradingView chart, real-time rate cards, and a client-side alert system.
 
